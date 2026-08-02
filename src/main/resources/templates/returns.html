@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">Return Vehicle &amp; Calculate Fines</h1>
+    </div>
+
+    <div style="max-width: 650px; margin: 0 auto;">
+        <div class="panel-card">
+            <h2 style="text-align: center; margin-bottom: 1.5rem; color: var(--color-warning);">Return Vehicle</h2>
+
+            <form th:action="@{/returns/process}" method="post">
+                <div class="form-group">
+                    <label for="activeRentalSelect">Active Rental</label>
+                    <select id="activeRentalSelect" name="rentalId" class="form-control" required>
+                        <option value="">-- Select Active Rental --</option>
+                        <option th:each="r : ${activeRentals}"
+                                th:value="${r.id}"
+                                th:text="${'#' + r.id + ' - ' + r.customer.name + ' | ' + r.vehicle.vehicleName + ' (' + r.rentalDate + ')'}">#1 - Ali Ahmed | Toyota Corolla</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="actualReturnDateInput">Actual Return Date</label>
+                    <input type="date" id="actualReturnDateInput" name="actualReturnDate" class="form-control" th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" required>
+                </div>
+
+                <!-- Dynamic Calculation Box (Matching ReturnPanel) -->
+                <div style="text-align: center; margin: 1.5rem 0; padding: 1.2rem; background-color: rgba(255, 152, 0, 0.05); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: var(--radius-sm);">
+                    <div id="expectedDateLabel" style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted);">Expected Return: N/A</div>
+                    <div id="lateDaysLabel" style="font-size: 1rem; font-weight: 600; margin-top: 0.3rem;">Late Days: 0</div>
+                    <div id="fineLabel" style="font-size: 1.1rem; font-weight: 700; color: var(--color-danger); margin-top: 0.3rem;">Accumulated Fine: Rs. 0.00</div>
+                    <div id="totalBillLabel" style="font-size: 1.3rem; font-weight: 700; color: var(--color-success); margin-top: 0.4rem;">Total Bill: Rs. 0.00</div>
+                </div>
+
+                <div class="btn-grid">
+                    <button type="submit" class="btn btn-warning btn-block">Process Return</button>
+                    <a th:href="@{/returns}" class="btn btn-secondary btn-block">Refresh Active</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Return Log History Table -->
+        <div class="panel-card" style="margin-top: 1.5rem;">
+            <h3 style="margin-bottom: 1rem;">Processed Return Receipts</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Rental ID</th>
+                        <th>Return Date</th>
+                        <th>Late Days</th>
+                        <th>Fine</th>
+                        <th>Total Bill</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="ret : ${returnHistory}">
+                        <td th:text="${ret.receiptNumber}">REC-20260801-1001</td>
+                        <td th:text="${'#' + ret.rental.id}">#1</td>
+                        <td th:text="${ret.returnDate}">2026-08-01</td>
+                        <td th:text="${ret.lateDays}">0</td>
+                        <td th:text="${'Rs. ' + #numbers.formatDecimal(ret.fine, 1, 2)}">Rs. 0.00</td>
+                        <td th:text="${'Rs. ' + #numbers.formatDecimal(ret.totalBill, 1, 2)}">Rs. 5000.00</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(returnHistory)}">
+                        <td colspan="6" style="text-align: center; color: var(--text-muted);">No return receipts recorded.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

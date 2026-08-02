@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">Vehicle Inventory Management</h1>
+        <div style="width: 250px;">
+            <input type="text" class="form-control table-search-input" data-target-table="vehiclesTable" placeholder="Search Inventory...">
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="panel-card" style="padding: 1rem; margin-bottom: 1rem;">
+        <form th:action="@{/vehicles}" method="get" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+                <input type="text" name="search" th:value="${searchQuery}" class="form-control" placeholder="Filter by Name/ID">
+            </div>
+            <div style="width: 160px;">
+                <select name="category" class="form-control" onchange="this.form.submit()">
+                    <option value="All" th:selected="${selectedCategory == 'All'}">All Categories</option>
+                    <option value="Sedan" th:selected="${selectedCategory == 'Sedan'}">Sedan</option>
+                    <option value="SUV" th:selected="${selectedCategory == 'SUV'}">SUV</option>
+                    <option value="Hatchback" th:selected="${selectedCategory == 'Hatchback'}">Hatchback</option>
+                    <option value="Crossover" th:selected="${selectedCategory == 'Crossover'}">Crossover</option>
+                    <option value="Truck" th:selected="${selectedCategory == 'Truck'}">Truck</option>
+                    <option value="Bike" th:selected="${selectedCategory == 'Bike'}">Bike</option>
+                </select>
+            </div>
+            <div style="width: 160px;">
+                <select name="status" class="form-control" onchange="this.form.submit()">
+                    <option value="All" th:selected="${selectedStatus == 'All'}">All Statuses</option>
+                    <option value="Available" th:selected="${selectedStatus == 'Available'}">Available</option>
+                    <option value="Rented" th:selected="${selectedStatus == 'Rented'}">Rented</option>
+                    <option value="Maintenance" th:selected="${selectedStatus == 'Maintenance'}">Maintenance</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a th:href="@{/vehicles}" class="btn btn-secondary">Reset</a>
+        </form>
+    </div>
+
+    <div class="split-layout">
+        <!-- Form Container (Left) -->
+        <div class="panel-card">
+            <h3 id="vehicleFormTitle" style="margin-bottom: 1rem;">Manage Vehicle</h3>
+            <form id="vehicleForm" th:action="@{/vehicles/add}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="vehicleId">Vehicle ID</label>
+                    <input type="text" id="vehicleId" name="vehicleId" class="form-control" placeholder="e.g. VEH101" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="vehicleName">Vehicle Name</label>
+                    <input type="text" id="vehicleName" name="vehicleName" class="form-control" placeholder="Toyota Prius, Civic, etc." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Hatchback">Hatchback</option>
+                        <option value="Crossover">Crossover</option>
+                        <option value="Truck">Truck</option>
+                        <option value="Bike">Bike</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="rentPerDay">Rent Per Day (Rs.)</label>
+                    <input type="number" step="0.01" id="rentPerDay" name="rentPerDay" class="form-control" placeholder="Daily Rental Price in Rs." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="available">Status</label>
+                    <select id="available" name="available" class="form-control">
+                        <option value="1">Available</option>
+                        <option value="0">Rented</option>
+                        <option value="2">Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Vehicle Image</label>
+                    <input type="file" id="imageFile" name="imageFile" class="form-control" accept="image/*" onchange="previewVehicleImage(this)">
+                    <div class="image-preview-box" id="imgPreviewBox" style="margin-top: 0.5rem;">
+                        <span>No Image</span>
+                    </div>
+                </div>
+
+                <div class="btn-grid" style="margin-top: 1rem;">
+                    <button type="submit" id="addVehicleBtn" class="btn btn-success">Add Vehicle</button>
+                    <button type="button" id="updateVehicleBtn" class="btn btn-primary" onclick="submitVehicleUpdate()">Update</button>
+                    <button type="button" id="deleteVehicleBtn" class="btn btn-danger" onclick="submitVehicleDelete()">Delete</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearVehicleForm()">Clear</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Container (Right) -->
+        <div class="panel-card">
+            <div class="table-container">
+                <table class="table" id="vehiclesTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Rent/Day</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="v : ${vehicles}"
+                        style="cursor: pointer;"
+                        th:onclick="selectVehicleRow([[${v.vehicleId}]], [[${v.vehicleName}]], [[${v.category}]], [[${v.rentPerDay}]], [[${v.available}]], [[${v.imagePath}]])">
+                        <td th:text="${v.vehicleId}">101</td>
+                        <td th:text="${v.vehicleName}">Toyota Corolla</td>
+                        <td th:text="${v.category}">Sedan</td>
+                        <td th:text="${'Rs. ' + #numbers.formatDecimal(v.rentPerDay, 1, 2)}">Rs. 5000.00</td>
+                        <td>
+                            <span th:if="${v.available == 1}" class="badge badge-available">Available</span>
+                            <span th:if="${v.available == 0}" class="badge badge-rented">Rented</span>
+                            <span th:if="${v.available == 2}" class="badge badge-maintenance">Maintenance</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(vehicles)}">
+                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No vehicles match criteria.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function previewVehicleImage(input) {
+            const previewBox = document.getElementById('imgPreviewBox');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewBox.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function selectVehicleRow(id, name, category, rent, available, imagePath) {
+            document.getElementById('vehicleId').value = id;
+            document.getElementById('vehicleId').readOnly = true;
+            document.getElementById('vehicleName').value = name;
+            document.getElementById('category').value = category;
+            document.getElementById('rentPerDay').value = rent;
+            document.getElementById('available').value = available;
+
+            const previewBox = document.getElementById('imgPreviewBox');
+            if (imagePath) {
+                previewBox.innerHTML = `<img src="${imagePath}" alt="Vehicle Image">`;
+            } else {
+                previewBox.innerHTML = '<span>No Image</span>';
+            }
+
+            document.getElementById('vehicleFormTitle').textContent = 'Edit Vehicle: ' + id;
+        }
+
+        function clearVehicleForm() {
+            document.getElementById('vehicleId').value = '';
+            document.getElementById('vehicleId').readOnly = false;
+            document.getElementById('vehicleName').value = '';
+            document.getElementById('rentPerDay').value = '';
+            document.getElementById('category').selectedIndex = 0;
+            document.getElementById('available').selectedIndex = 0;
+            document.getElementById('imageFile').value = '';
+            document.getElementById('imgPreviewBox').innerHTML = '<span>No Image</span>';
+            document.getElementById('vehicleFormTitle').textContent = 'Manage Vehicle';
+        }
+
+        function submitVehicleUpdate() {
+            const form = document.getElementById('vehicleForm');
+            form.action = '/vehicles/update';
+            form.submit();
+        }
+
+        function submitVehicleDelete() {
+            const id = document.getElementById('vehicleId').value;
+            if (!id) {
+                alert('Please select a vehicle from the table first.');
+                return;
+            }
+            if (confirm('Are you sure you want to delete vehicle ' + id + '? Associated rentals will also be removed.')) {
+                submitPostWithCsrf('/vehicles/delete/' + id);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

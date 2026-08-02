@@ -1,0 +1,2050 @@
+
+===== ./target/classes/application.properties =====
+
+server.port=8080
+
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:mem:rentwheelsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# JPA / Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+
+# Thymeleaf Configuration
+spring.thymeleaf.cache=false
+spring.thymeleaf.mode=HTML
+
+# Multipart File Upload Configuration
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=5MB
+
+===== ./pom.xml =====
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+    <groupId>com.rentwheels</groupId>
+    <artifactId>rental-wheels-springboot</artifactId>
+    <version>1.0.0</version>
+    <name>rental-wheels-springboot</name>
+    <description>RentWheels - Spring Boot Enterprise Vehicle Rental Portal</description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+===== ./src/main/resources/application.properties =====
+
+server.port=8080
+
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:mem:rentwheelsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# JPA / Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+
+# Thymeleaf Configuration
+spring.thymeleaf.cache=false
+spring.thymeleaf.mode=HTML
+
+# Multipart File Upload Configuration
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=5MB
+
+===== ./src/main/java/com/rentwheels/repository/CustomerRepository.java =====
+
+package com.rentwheels.repository;
+
+import com.rentwheels.entity.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface CustomerRepository extends JpaRepository<Customer, String> {
+
+    List<Customer> findAllByOrderByNameAsc();
+
+    @Query("SELECT c FROM Customer c WHERE LOWER(c.id) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY c.name ASC")
+    List<Customer> searchCustomers(@Param("query") String query);
+}
+
+===== ./src/main/java/com/rentwheels/repository/RentalRepository.java =====
+
+package com.rentwheels.repository;
+
+import com.rentwheels.entity.Rental;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface RentalRepository extends JpaRepository<Rental, Integer> {
+
+    List<Rental> findAllByOrderByIdDesc();
+
+    List<Rental> findByStatusOrderByIdDesc(String status);
+
+    @Query("SELECT COALESCE(SUM(r.totalRent), 0.0) FROM Rental r")
+    Double sumTotalRent();
+}
+
+===== ./src/main/java/com/rentwheels/repository/ReturnRepository.java =====
+
+package com.rentwheels.repository;
+
+import com.rentwheels.entity.Return;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ReturnRepository extends JpaRepository<Return, Integer> {
+
+    List<Return> findAllByOrderByIdDesc();
+
+    Optional<Return> findByRentalId(int rentalId);
+
+    @Query("SELECT COALESCE(SUM(r.fine), 0.0) FROM Return r")
+    Double sumTotalFine();
+}
+
+===== ./src/main/java/com/rentwheels/repository/VehicleRepository.java =====
+
+package com.rentwheels.repository;
+
+import com.rentwheels.entity.Vehicle;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface VehicleRepository extends JpaRepository<Vehicle, String> {
+
+    List<Vehicle> findAllByOrderByVehicleIdAsc();
+
+    List<Vehicle> findByAvailableOrderByVehicleIdAsc(int available);
+
+    @Query("SELECT v FROM Vehicle v WHERE " +
+           "(:query IS NULL OR :query = '' OR LOWER(v.vehicleId) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(v.vehicleName) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:category IS NULL OR :category = 'All' OR v.category = :category) AND " +
+           "(:available IS NULL OR v.available = :available) " +
+           "ORDER BY v.vehicleId ASC")
+    List<Vehicle> searchVehicles(@Param("query") String query,
+                                 @Param("category") String category,
+                                 @Param("available") Integer available);
+
+    long countByAvailable(int available);
+}
+
+===== ./src/main/java/com/rentwheels/repository/UserRepository.java =====
+
+package com.rentwheels.entity;
+
+package com.rentwheels.repository;
+
+import com.rentwheels.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Integer> {
+
+    Optional<User> findByUsername(String username);
+
+    List<User> findAllByOrderByUsernameAsc();
+}
+
+===== ./src/main/java/com/rentwheels/RentalWheelsApplication.java =====
+
+package com.rentwheels;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class RentalWheelsApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RentalWheelsApplication.class, args);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/config/SecurityConfig.java =====
+
+package com.rentwheels.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.io.File;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig implements WebMvcConfigurer {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/h2-console/**", "/login").permitAll()
+                .requestMatchers("/reports/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/login?error=true")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout=true")
+                .permitAll()
+            )
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/h2-console/**")
+            )
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin())
+            );
+
+        return http.build();
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        File uploadDir = new File("uploads");
+        String uploadPath = uploadDir.toURI().toString();
+
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations(uploadPath);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/config/DataInitializer.java =====
+
+package com.rentwheels.config;
+
+import com.rentwheels.entity.Customer;
+import com.rentwheels.entity.User;
+import com.rentwheels.entity.Vehicle;
+import com.rentwheels.repository.CustomerRepository;
+import com.rentwheels.repository.UserRepository;
+import com.rentwheels.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+@Component
+public class DataInitializer implements CommandLineRunner {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Override
+    public void run(String... args) throws Exception {
+        // Seed default users if empty
+        if (userRepository.count() == 0) {
+            String encodedPass = passwordEncoder.encode("1234");
+            userRepository.save(new User(0, "admin", encodedPass, "ADMIN", "System Administrator"));
+            userRepository.save(new User(0, "employee", encodedPass, "EMPLOYEE", "Standard Operator"));
+        }
+
+        // Seed default customers if empty
+        if (customerRepository.count() == 0) {
+            customerRepository.save(new Customer("CUST101", "Ali Ahmed", "0300-1234567", "ali@example.com", "AP-872A"));
+            customerRepository.save(new Customer("CUST102", "Sara Khan", "0321-9876543", "sara@example.com", "PB-901B"));
+            customerRepository.save(new Customer("CUST103", "John Doe", "0123-4567890", "john@example.com", "DL-342C"));
+        }
+
+        // Seed default vehicles if empty
+        if (vehicleRepository.count() == 0) {
+            vehicleRepository.save(new Vehicle("101", "Toyota Corolla", "Sedan", 5000.0, 1, null));
+            vehicleRepository.save(new Vehicle("102", "Honda Civic", "Sedan", 5500.0, 1, null));
+            vehicleRepository.save(new Vehicle("103", "Suzuki Alto", "Hatchback", 3000.0, 1, null));
+            vehicleRepository.save(new Vehicle("104", "Kia Sportage", "SUV", 8000.0, 1, null));
+        }
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Customer.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "customers")
+public class Customer extends Person {
+
+    private String phone;
+    private String email;
+    private String driverLicense;
+
+    public Customer() {
+        super();
+    }
+
+    public Customer(String id, String name, String phone, String email, String driverLicense) {
+        super(id, name);
+        this.phone = phone;
+        this.email = email;
+        this.driverLicense = driverLicense;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getDriverLicense() {
+        return driverLicense;
+    }
+
+    public void setDriverLicense(String driverLicense) {
+        this.driverLicense = driverLicense;
+    }
+
+    @Override
+    public void displayInfo() {
+        System.out.println(id + " | " + name + " | " + phone + " | " + email + " | " + driverLicense);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/User.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String passwordHash;
+
+    @Column(nullable = false)
+    private String role; // ADMIN, EMPLOYEE
+
+    @Column(nullable = false)
+    private String name;
+
+    public User() {
+    }
+
+    public User(int id, String username, String passwordHash, String role, String name) {
+        this.id = id;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equalsIgnoreCase(role);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Person.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+
+@MappedSuperclass
+public abstract class Person {
+
+    @Id
+    protected String id;
+    protected String name;
+
+    public Person() {
+    }
+
+    public Person(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public abstract void displayInfo();
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Return.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "returns")
+public class Return {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "rental_id", nullable = false)
+    private Rental rental;
+
+    @Column(nullable = false)
+    private String returnDate;
+
+    @Column(nullable = false)
+    private int lateDays;
+
+    @Column(nullable = false)
+    private double fine;
+
+    @Column(nullable = false)
+    private double totalBill;
+
+    @Column(unique = true, nullable = false)
+    private String receiptNumber;
+
+    public Return() {
+    }
+
+    public Return(int id, Rental rental, String returnDate, int lateDays, double fine, double totalBill, String receiptNumber) {
+        this.id = id;
+        this.rental = rental;
+        this.returnDate = returnDate;
+        this.lateDays = lateDays;
+        this.fine = fine;
+        this.totalBill = totalBill;
+        this.receiptNumber = receiptNumber;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Rental getRental() {
+        return rental;
+    }
+
+    public void setRental(Rental rental) {
+        this.rental = rental;
+    }
+
+    public String getReturnDate() {
+        return returnDate;
+    }
+
+    public void setReturnDate(String returnDate) {
+        this.returnDate = returnDate;
+    }
+
+    public int getLateDays() {
+        return lateDays;
+    }
+
+    public void setLateDays(int lateDays) {
+        this.lateDays = lateDays;
+    }
+
+    public double getFine() {
+        return fine;
+    }
+
+    public void setFine(double fine) {
+        this.fine = fine;
+    }
+
+    public double getTotalBill() {
+        return totalBill;
+    }
+
+    public void setTotalBill(double totalBill) {
+        this.totalBill = totalBill;
+    }
+
+    public String getReceiptNumber() {
+        return receiptNumber;
+    }
+
+    public void setReceiptNumber(String receiptNumber) {
+        this.receiptNumber = receiptNumber;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Vehicle.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "vehicles")
+public class Vehicle {
+
+    @Id
+    @Column(name = "id")
+    private String vehicleId;
+
+    @Column(nullable = false)
+    private String vehicleName;
+
+    @Column(nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private double rentPerDay;
+
+    @Column(nullable = false)
+    private int available; // 1 = Available, 0 = Rented, 2 = Maintenance
+
+    private String imagePath;
+
+    public Vehicle() {
+    }
+
+    public Vehicle(String vehicleId, String vehicleName, String category, double rentPerDay, int available, String imagePath) {
+        this.vehicleId = vehicleId;
+        this.vehicleName = vehicleName;
+        this.category = category;
+        this.rentPerDay = rentPerDay;
+        this.available = available;
+        this.imagePath = imagePath;
+    }
+
+    public String getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(String vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public String getVehicleName() {
+        return vehicleName;
+    }
+
+    public void setVehicleName(String vehicleName) {
+        this.vehicleName = vehicleName;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public double getRentPerDay() {
+        return rentPerDay;
+    }
+
+    public void setRentPerDay(double rentPerDay) {
+        this.rentPerDay = rentPerDay;
+    }
+
+    public int getAvailable() {
+        return available;
+    }
+
+    public void setAvailable(int available) {
+        this.available = available;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public String getStatusString() {
+        switch (available) {
+            case 0: return "Rented";
+            case 2: return "Maintenance";
+            case 1:
+            default: return "Available";
+        }
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Bill.java =====
+
+package com.rentwheels.entity;
+
+public class Bill {
+
+    public static double generateBill(double rent, double fine) {
+        return rent + fine;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Rental.java =====
+
+package com.rentwheels.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "rentals")
+public class Rental {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    private Vehicle vehicle;
+
+    @Column(nullable = false)
+    private String rentalDate;
+
+    @Column(nullable = false)
+    private String expectedReturnDate;
+
+    @Column(nullable = false)
+    private int days;
+
+    @Column(nullable = false)
+    private String status; // ACTIVE, RETURNED, OVERDUE
+
+    @Column(nullable = false)
+    private double totalRent;
+
+    public Rental() {
+    }
+
+    public Rental(int id, Customer customer, Vehicle vehicle, String rentalDate, String expectedReturnDate, int days, String status, double totalRent) {
+        this.id = id;
+        this.customer = customer;
+        this.vehicle = vehicle;
+        this.rentalDate = rentalDate;
+        this.expectedReturnDate = expectedReturnDate;
+        this.days = days;
+        this.status = status;
+        this.totalRent = totalRent;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public Vehicle getVehicle() {
+        return vehicle;
+    }
+
+    public void setVehicle(Vehicle vehicle) {
+        this.vehicle = vehicle;
+    }
+
+    public String getRentalDate() {
+        return rentalDate;
+    }
+
+    public void setRentalDate(String rentalDate) {
+        this.rentalDate = rentalDate;
+    }
+
+    public String getExpectedReturnDate() {
+        return expectedReturnDate;
+    }
+
+    public void setExpectedReturnDate(String expectedReturnDate) {
+        this.expectedReturnDate = expectedReturnDate;
+    }
+
+    public int getDays() {
+        return days;
+    }
+
+    public void setDays(int days) {
+        this.days = days;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public double getTotalRent() {
+        return totalRent;
+    }
+
+    public void setTotalRent(double totalRent) {
+        this.totalRent = totalRent;
+    }
+
+    public double calculateRent() {
+        if (vehicle != null) {
+            return vehicle.getRentPerDay() * days;
+        }
+        return totalRent;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/entity/Car.java =====
+
+package com.rentwheels.entity;
+
+public class Car extends Vehicle {
+
+    public Car() {
+        super();
+    }
+
+    public Car(String vehicleId, String vehicleName, double rentPerDay) {
+        super(vehicleId, vehicleName, "Car", rentPerDay, 1, null);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/CustomerController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.entity.Customer;
+import com.rentwheels.service.CustomerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/customers")
+public class CustomerController {
+
+    @Autowired
+    private CustomerService customerService;
+
+    @GetMapping
+    public String listCustomers(@RequestParam(value = "search", required = false) String search, Model model) {
+        model.addAttribute("customers", customerService.searchCustomers(search));
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("newCustomer", new Customer());
+        model.addAttribute("activeTab", "customers");
+        return "customers";
+    }
+
+    @PostMapping("/add")
+    public String addCustomer(@ModelAttribute Customer customer, RedirectAttributes redirectAttributes) {
+        try {
+            customerService.addCustomer(customer);
+            redirectAttributes.addFlashAttribute("successMessage", "Customer added successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/customers";
+    }
+
+    @PostMapping("/update")
+    public String updateCustomer(@ModelAttribute Customer customer, RedirectAttributes redirectAttributes) {
+        try {
+            customerService.updateCustomer(customer);
+            redirectAttributes.addFlashAttribute("successMessage", "Customer updated successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/customers";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteCustomer(@PathVariable("id") String id, RedirectAttributes redirectAttributes) {
+        try {
+            customerService.deleteCustomer(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Customer deleted successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/customers";
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/RentalController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.service.CustomerService;
+import com.rentwheels.service.RentalService;
+import com.rentwheels.service.VehicleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/rentals")
+public class RentalController {
+
+    @Autowired
+    private RentalService rentalService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private VehicleService vehicleService;
+
+    @GetMapping
+    public String rentForm(Model model) {
+        model.addAttribute("customers", customerService.getAllCustomers());
+        model.addAttribute("vehicles", vehicleService.getAvailableVehicles());
+        model.addAttribute("recentRentals", rentalService.getAllRentals());
+        model.addAttribute("activeTab", "rent_vehicle");
+        return "rentals";
+    }
+
+    @PostMapping("/book")
+    public String bookVehicle(
+            @RequestParam("customerId") String customerId,
+            @RequestParam("vehicleId") String vehicleId,
+            @RequestParam("rentalDate") String rentalDate,
+            @RequestParam("expectedReturnDate") String expectedReturnDate,
+            @RequestParam("days") int days,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            rentalService.bookVehicle(customerId, vehicleId, rentalDate, expectedReturnDate, days);
+            redirectAttributes.addFlashAttribute("successMessage", "Booking saved successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+
+        return "redirect:/rentals";
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/DashboardController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.service.CustomerService;
+import com.rentwheels.service.VehicleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class DashboardController {
+
+    @Autowired
+    private VehicleService vehicleService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @GetMapping({"/", "/dashboard"})
+    public String dashboard(Model model) {
+        model.addAttribute("totalVehicles", vehicleService.getTotalVehiclesCount());
+        model.addAttribute("availableVehicles", vehicleService.getAvailableVehiclesCount());
+        model.addAttribute("rentedVehicles", vehicleService.getRentedVehiclesCount());
+        model.addAttribute("totalCustomers", customerService.getTotalCustomersCount());
+        model.addAttribute("vehicles", vehicleService.getAllVehicles());
+        model.addAttribute("activeTab", "dashboard");
+        return "dashboard";
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/ReturnController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.entity.Rental;
+import com.rentwheels.entity.Return;
+import com.rentwheels.service.RentalService;
+import com.rentwheels.service.ReturnService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Controller
+@RequestMapping("/returns")
+public class ReturnController {
+
+    private static final double FINE_RATE_PER_DAY = 1000.00;
+
+    @Autowired
+    private ReturnService returnService;
+
+    @Autowired
+    private RentalService rentalService;
+
+    @GetMapping
+    public String returnForm(Model model) {
+        model.addAttribute("activeRentals", rentalService.getActiveRentals());
+        model.addAttribute("returnHistory", returnService.getAllReturns());
+        model.addAttribute("activeTab", "return_vehicle");
+        return "returns";
+    }
+
+    @PostMapping("/process")
+    public String processReturn(
+            @RequestParam("rentalId") int rentalId,
+            @RequestParam("actualReturnDate") String actualReturnDate,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Return returnObj = returnService.processReturn(rentalId, actualReturnDate);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Return transaction processed successfully! Receipt: " + returnObj.getReceiptNumber());
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+
+        return "redirect:/returns";
+    }
+
+    @GetMapping("/api/calculate")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> calculateReturnDetails(
+            @RequestParam("rentalId") int rentalId,
+            @RequestParam("actualReturnDate") String actualReturnDateStr) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Optional<Rental> rentalOpt = rentalService.getRentalById(rentalId);
+            if (rentalOpt.isEmpty()) {
+                response.put("error", "Rental not found");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            Rental r = rentalOpt.get();
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            Date expectedDate = df.parse(r.getExpectedReturnDate());
+            Date actualDate = df.parse(actualReturnDateStr);
+
+            Calendar expectedCal = Calendar.getInstance();
+            expectedCal.setTime(expectedDate);
+            expectedCal.set(Calendar.HOUR_OF_DAY, 0);
+            expectedCal.set(Calendar.MINUTE, 0);
+            expectedCal.set(Calendar.SECOND, 0);
+
+            Calendar actualCal = Calendar.getInstance();
+            actualCal.setTime(actualDate);
+            actualCal.set(Calendar.HOUR_OF_DAY, 0);
+            actualCal.set(Calendar.MINUTE, 0);
+            actualCal.set(Calendar.SECOND, 0);
+
+            long diffInMillis = actualCal.getTimeInMillis() - expectedCal.getTimeInMillis();
+            long diffDays = java.util.concurrent.TimeUnit.DAYS.convert(diffInMillis, java.util.concurrent.TimeUnit.MILLISECONDS);
+
+            int lateDays = (diffDays > 0) ? (int) diffDays : 0;
+            double fine = lateDays * FINE_RATE_PER_DAY;
+            double totalBill = r.getTotalRent() + fine;
+
+            response.put("expectedReturnDate", r.getExpectedReturnDate());
+            response.put("lateDays", lateDays);
+            response.put("fine", fine);
+            response.put("totalRent", r.getTotalRent());
+            response.put("totalBill", totalBill);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            response.put("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/AuthController.java =====
+
+package com.rentwheels.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class AuthController {
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/BillingController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.entity.Rental;
+import com.rentwheels.entity.Return;
+import com.rentwheels.service.RentalService;
+import com.rentwheels.service.ReturnService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+@Controller
+@RequestMapping("/billing")
+public class BillingController {
+
+    @Autowired
+    private RentalService rentalService;
+
+    @Autowired
+    private ReturnService returnService;
+
+    @GetMapping
+    public String billingPage(Model model) {
+        model.addAttribute("rentals", rentalService.getAllRentals());
+        model.addAttribute("activeTab", "billing");
+        return "billing";
+    }
+
+    @GetMapping("/invoice/{rentalId}")
+    @ResponseBody
+    public ResponseEntity<String> getInvoice(@PathVariable("rentalId") int rentalId) {
+        Optional<Rental> rentalOpt = rentalService.getRentalById(rentalId);
+        if (rentalOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Rental r = rentalOpt.get();
+        Optional<Return> returnOpt = returnService.getReturnByRentalId(rentalId);
+        Return ret = returnOpt.orElse(null);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("==================================================\n");
+        sb.append("                 RENTWHEELS                       \n");
+        sb.append("          VEHICLE RENTAL INVOICE RECEIPT          \n");
+        sb.append("==================================================\n\n");
+
+        sb.append(String.format("Rental ID      : #%06d\n", r.getId()));
+        sb.append(String.format("Status         : %s\n", r.getStatus()));
+        if (ret != null) {
+            sb.append(String.format("Receipt Number : %s\n", ret.getReceiptNumber()));
+        }
+        sb.append("Date Generated : ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n\n");
+
+        sb.append("--- CUSTOMER INFORMATION -------------------------\n");
+        sb.append("ID             : ").append(r.getCustomer().getId()).append("\n");
+        sb.append("Name           : ").append(r.getCustomer().getName()).append("\n");
+        sb.append("Phone Number   : ").append(r.getCustomer().getPhone()).append("\n");
+        if (r.getCustomer().getEmail() != null) {
+            sb.append("Email Address  : ").append(r.getCustomer().getEmail()).append("\n");
+        }
+        sb.append("Driver License : ").append(r.getCustomer().getDriverLicense()).append("\n\n");
+
+        sb.append("--- VEHICLE DETAILS ------------------------------\n");
+        sb.append("ID             : ").append(r.getVehicle().getVehicleId()).append("\n");
+        sb.append("Name           : ").append(r.getVehicle().getVehicleName()).append("\n");
+        sb.append("Category       : ").append(r.getVehicle().getCategory()).append("\n");
+        sb.append("Rate Per Day   : Rs. ").append(String.format("%.2f", r.getVehicle().getRentPerDay())).append("\n\n");
+
+        sb.append("--- TRANSACTION PRICING DETAILS ------------------\n");
+        sb.append("Rental Date    : ").append(r.getRentalDate()).append("\n");
+        sb.append("Return Expect  : ").append(r.getExpectedReturnDate()).append("\n");
+        sb.append("Days Reserved  : ").append(r.getDays()).append("\n");
+        sb.append("Base Rent Cost : Rs. ").append(String.format("%.2f", r.getTotalRent())).append("\n");
+
+        if (ret != null) {
+            sb.append("Actual Return  : ").append(ret.getReturnDate()).append("\n");
+            sb.append("Late Days Count: ").append(ret.getLateDays()).append("\n");
+            sb.append("Assessed Fine  : Rs. ").append(String.format("%.2f", ret.getFine())).append("\n");
+            sb.append("--------------------------------------------------\n");
+            sb.append("TOTAL BILL COST: Rs. ").append(String.format("%.2f", ret.getTotalBill())).append("\n");
+        } else {
+            sb.append("--------------------------------------------------\n");
+            sb.append("ESTIMATED CHARGES: Rs. ").append(String.format("%.2f", r.getTotalRent())).append("\n");
+            sb.append("(*Fines assessed upon return if overdue)\n");
+        }
+        sb.append("--------------------------------------------------\n\n");
+        sb.append("       Thank you for choosing RentWheels!\n");
+        sb.append("         Safe travels and drive alert.\n");
+        sb.append("==================================================\n");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(sb.toString());
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportCsv() {
+        List<Rental> list = rentalService.getAllRentals();
+        StringBuilder csv = new StringBuilder();
+        csv.append("Rental ID,Customer Name,Vehicle Name,Status,Total Cost\n");
+
+        for (Rental r : list) {
+            csv.append(String.format("%d,\"%s\",\"%s\",%s,%.2f\n",
+                    r.getId(),
+                    r.getCustomer().getName(),
+                    r.getVehicle().getVehicleName(),
+                    r.getStatus(),
+                    r.getTotalRent()
+            ));
+        }
+
+        byte[] content = csv.toString().getBytes();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=rent_transactions_report.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(content);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/VehicleController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.entity.Vehicle;
+import com.rentwheels.service.VehicleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/vehicles")
+public class VehicleController {
+
+    @Autowired
+    private VehicleService vehicleService;
+
+    @GetMapping
+    public String listVehicles(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "category", required = false, defaultValue = "All") String category,
+            @RequestParam(value = "status", required = false, defaultValue = "All") String status,
+            Model model) {
+
+        model.addAttribute("vehicles", vehicleService.searchVehicles(search, category, status));
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("newVehicle", new Vehicle());
+        model.addAttribute("activeTab", "vehicles");
+        return "vehicles";
+    }
+
+    @PostMapping("/add")
+    public String addVehicle(@ModelAttribute Vehicle vehicle,
+                             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            vehicleService.addVehicle(vehicle, imageFile);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle added successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/vehicles";
+    }
+
+    @PostMapping("/update")
+    public String updateVehicle(@ModelAttribute Vehicle vehicle,
+                                @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            vehicleService.updateVehicle(vehicle, imageFile);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle updated successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/vehicles";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteVehicle(@PathVariable("id") String id, RedirectAttributes redirectAttributes) {
+        try {
+            vehicleService.deleteVehicle(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle deleted successfully!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/vehicles";
+    }
+}
+
+===== ./src/main/java/com/rentwheels/controller/ReportController.java =====
+
+package com.rentwheels.controller;
+
+import com.rentwheels.service.ReportService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/reports")
+public class ReportController {
+
+    @Autowired
+    private ReportService reportService;
+
+    @GetMapping
+    public String viewReport(Authentication authentication, Model model) {
+        String username = (authentication != null) ? authentication.getName() : "System Operator";
+        String reportText = reportService.generateSystemReport(username);
+        model.addAttribute("reportContent", reportText);
+        model.addAttribute("activeTab", "reports");
+        return "reports";
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportReport(Authentication authentication) {
+        String username = (authentication != null) ? authentication.getName() : "System Operator";
+        String reportText = reportService.generateSystemReport(username);
+        byte[] content = reportText.getBytes();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=rentwheels_report.txt")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(content);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/ReportService.java =====
+
+package com.rentwheels.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+@Service
+public class ReportService {
+
+    @Autowired
+    private VehicleService vehicleService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private RentalService rentalService;
+
+    @Autowired
+    private ReturnService returnService;
+
+    public String generateSystemReport(String compiledBy) {
+        long totalVehicles = vehicleService.getTotalVehiclesCount();
+        long activeVehicles = vehicleService.getAvailableVehiclesCount();
+        long rentedVehicles = vehicleService.getRentedVehiclesCount();
+        long maintenanceVehicles = vehicleService.getMaintenanceVehiclesCount();
+        long totalCustomers = customerService.getTotalCustomersCount();
+        long totalRentals = rentalService.getAllRentals().size();
+
+        double rentRevenue = rentalService.getTotalRentRevenue();
+        double fineRevenue = returnService.getTotalFineRevenue();
+        double totalRevenue = rentRevenue + fineRevenue;
+
+        double utilization = totalVehicles > 0 ? ((double) rentedVehicles / totalVehicles) * 100 : 0.0;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=========================================================================\n");
+        sb.append("                       RENTWHEELS ANALYTICS REPORT                       \n");
+        sb.append("=========================================================================\n");
+        sb.append("Date Run      : ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
+        sb.append("Compiled By   : ").append(compiledBy != null ? compiledBy : "System Operator").append("\n");
+        sb.append("-------------------------------------------------------------------------\n\n");
+
+        sb.append("[1] INVENTORY LEVEL MATRIX\n");
+        sb.append("--------------------------------------------------\n");
+        sb.append(String.format("   Total Registered Vehicles   : %d\n", totalVehicles));
+        sb.append(String.format("   Active (Available to Rent)  : %d\n", activeVehicles));
+        sb.append(String.format("   Leased (Currently Rented)   : %d\n", rentedVehicles));
+        sb.append(String.format("   Out of Service (Maintenance): %d\n", maintenanceVehicles));
+        sb.append(String.format("   Leasing Utilization Rate    : %.2f%%\n\n", utilization));
+
+        sb.append("[2] CUSTOMER DEMOGRAPHICS & ENGAGEMENT\n");
+        sb.append("--------------------------------------------------\n");
+        sb.append(String.format("   Total Accounts Registered   : %d\n", totalCustomers));
+        sb.append(String.format("   Total Rentals Completed     : %d\n\n", totalRentals));
+
+        sb.append("[3] FINANCIAL REVENUE METRICS\n");
+        sb.append("--------------------------------------------------\n");
+        sb.append(String.format("   Base Rental Charges Accrued : Rs. %.2f\n", rentRevenue));
+        sb.append(String.format("   Returned Overdue Fines Paid : Rs. %.2f\n", fineRevenue));
+        sb.append("   ----------------------------------------------\n");
+        sb.append(String.format("   TOTAL REVENUE GENERATED     : Rs. %.2f\n\n", totalRevenue));
+
+        sb.append("=========================================================================\n");
+        sb.append("                   END OF VEHICLE RENTAL MANAGEMENT REPORT               \n");
+        sb.append("=========================================================================\n");
+
+        return sb.toString();
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/ValidationService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.repository.CustomerRepository;
+import com.rentwheels.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.regex.Pattern;
+
+@Service
+public class ValidationService {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[A-Za-z0-9+_.-]+@(.+)$"
+    );
+
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^\\+?[0-9\\-\\s]{7,15}$"
+    );
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    public boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return true; // Optional email
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    public boolean isValidPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+        return PHONE_PATTERN.matcher(phone).matches();
+    }
+
+    public boolean isValidId(String id) {
+        return id != null && !id.trim().isEmpty() && id.trim().length() >= 3;
+    }
+
+    public boolean isValidName(String name) {
+        return name != null && !name.trim().isEmpty() && name.trim().length() >= 2;
+    }
+
+    public boolean isCustomerIdUnique(String id) {
+        return !customerRepository.existsById(id);
+    }
+
+    public boolean isVehicleIdUnique(String id) {
+        return !vehicleRepository.existsById(id);
+    }
+
+    public boolean isValidRent(double rent) {
+        return rent > 0.0;
+    }
+
+    public boolean isValidDays(int days) {
+        return days > 0;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/RentalService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.entity.Customer;
+import com.rentwheels.entity.Rental;
+import com.rentwheels.entity.Vehicle;
+import com.rentwheels.repository.CustomerRepository;
+import com.rentwheels.repository.RentalRepository;
+import com.rentwheels.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class RentalService {
+
+    @Autowired
+    private RentalRepository rentalRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    public List<Rental> getAllRentals() {
+        return rentalRepository.findAllByOrderByIdDesc();
+    }
+
+    public List<Rental> getActiveRentals() {
+        return rentalRepository.findByStatusOrderByIdDesc("ACTIVE");
+    }
+
+    public Optional<Rental> getRentalById(int id) {
+        return rentalRepository.findById(id);
+    }
+
+    @Transactional
+    public Rental bookVehicle(String customerId, String vehicleId, String rentalDate, String expectedReturnDate, int days) throws Exception {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Selected customer not found."));
+
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Selected vehicle not found."));
+
+        if (vehicle.getAvailable() != 1) {
+            throw new IllegalStateException("Vehicle is currently not available for rental.");
+        }
+
+        if (days <= 0) {
+            days = 1;
+        }
+
+        double totalRent = days * vehicle.getRentPerDay();
+
+        Rental rental = new Rental(0, customer, vehicle, rentalDate, expectedReturnDate, days, "ACTIVE", totalRent);
+
+        // 1. Save Rental
+        Rental savedRental = rentalRepository.save(rental);
+
+        // 2. Mark Vehicle as Rented (0)
+        vehicle.setAvailable(0);
+        vehicleRepository.save(vehicle);
+
+        return savedRental;
+    }
+
+    @Transactional
+    public void deleteRental(int id) throws Exception {
+        if (!rentalRepository.existsById(id)) {
+            throw new IllegalArgumentException("Rental record #" + id + " not found.");
+        }
+        rentalRepository.deleteById(id);
+    }
+
+    public double getTotalRentRevenue() {
+        Double sum = rentalRepository.sumTotalRent();
+        return (sum != null) ? sum : 0.0;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/AuthService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.entity.User;
+import com.rentwheels.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+
+@Service
+public class AuthService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPasswordHash(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+        );
+    }
+
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/CustomerService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.entity.Customer;
+import com.rentwheels.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class CustomerService {
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private ValidationService validationService;
+
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAllByOrderByNameAsc();
+    }
+
+    public Optional<Customer> getCustomerById(String id) {
+        return customerRepository.findById(id);
+    }
+
+    public List<Customer> searchCustomers(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllCustomers();
+        }
+        return customerRepository.searchCustomers(query.trim());
+    }
+
+    @Transactional
+    public void addCustomer(Customer customer) throws Exception {
+        if (!validationService.isValidId(customer.getId())) {
+            throw new IllegalArgumentException("Customer ID must be at least 3 characters.");
+        }
+        if (!validationService.isCustomerIdUnique(customer.getId())) {
+            throw new IllegalArgumentException("Customer ID already exists in the system.");
+        }
+        if (!validationService.isValidName(customer.getName())) {
+            throw new IllegalArgumentException("Please enter a valid customer name.");
+        }
+        if (!validationService.isValidPhone(customer.getPhone())) {
+            throw new IllegalArgumentException("Please enter a valid phone number (7-15 digits).");
+        }
+        if (!validationService.isValidEmail(customer.getEmail())) {
+            throw new IllegalArgumentException("Please enter a valid email address.");
+        }
+        if (customer.getDriverLicense() == null || customer.getDriverLicense().trim().isEmpty()) {
+            throw new IllegalArgumentException("Driving license number is required.");
+        }
+
+        customerRepository.save(customer);
+    }
+
+    @Transactional
+    public void updateCustomer(Customer customer) throws Exception {
+        if (!customerRepository.existsById(customer.getId())) {
+            throw new IllegalArgumentException("Customer with ID " + customer.getId() + " not found.");
+        }
+        if (!validationService.isValidName(customer.getName())) {
+            throw new IllegalArgumentException("Please enter a valid customer name.");
+        }
+        if (!validationService.isValidPhone(customer.getPhone())) {
+            throw new IllegalArgumentException("Please enter a valid phone number.");
+        }
+        if (!validationService.isValidEmail(customer.getEmail())) {
+            throw new IllegalArgumentException("Please enter a valid email address.");
+        }
+        if (customer.getDriverLicense() == null || customer.getDriverLicense().trim().isEmpty()) {
+            throw new IllegalArgumentException("Driving license number is required.");
+        }
+
+        customerRepository.save(customer);
+    }
+
+    @Transactional
+    public void deleteCustomer(String id) throws Exception {
+        if (!customerRepository.existsById(id)) {
+            throw new IllegalArgumentException("Customer with ID " + id + " not found.");
+        }
+        customerRepository.deleteById(id);
+    }
+
+    public long getTotalCustomersCount() {
+        return customerRepository.count();
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/ReturnService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.entity.Rental;
+import com.rentwheels.entity.Return;
+import com.rentwheels.entity.Vehicle;
+import com.rentwheels.repository.RentalRepository;
+import com.rentwheels.repository.ReturnRepository;
+import com.rentwheels.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ReturnService {
+
+    private static final double FINE_RATE_PER_DAY = 1000.00;
+
+    @Autowired
+    private ReturnRepository returnRepository;
+
+    @Autowired
+    private RentalRepository rentalRepository;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    public List<Return> getAllReturns() {
+        return returnRepository.findAllByOrderByIdDesc();
+    }
+
+    public Optional<Return> getReturnByRentalId(int rentalId) {
+        return returnRepository.findByRentalId(rentalId);
+    }
+
+    @Transactional
+    public Return processReturn(int rentalId, String actualReturnDateStr) throws Exception {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new IllegalArgumentException("Rental transaction #" + rentalId + " not found."));
+
+        if (!"ACTIVE".equalsIgnoreCase(rental.getStatus())) {
+            throw new IllegalStateException("Rental transaction #" + rentalId + " is already returned or inactive.");
+        }
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        Date expectedDate = df.parse(rental.getExpectedReturnDate());
+        Date actualDate = df.parse(actualReturnDateStr);
+
+        Calendar expectedCal = Calendar.getInstance();
+        expectedCal.setTime(expectedDate);
+        expectedCal.set(Calendar.HOUR_OF_DAY, 0);
+        expectedCal.set(Calendar.MINUTE, 0);
+        expectedCal.set(Calendar.SECOND, 0);
+        expectedCal.set(Calendar.MILLISECOND, 0);
+
+        Calendar actualCal = Calendar.getInstance();
+        actualCal.setTime(actualDate);
+        actualCal.set(Calendar.HOUR_OF_DAY, 0);
+        actualCal.set(Calendar.MINUTE, 0);
+        actualCal.set(Calendar.SECOND, 0);
+        actualCal.set(Calendar.MILLISECOND, 0);
+
+        long diffInMillis = actualCal.getTimeInMillis() - expectedCal.getTimeInMillis();
+        long diffDays = java.util.concurrent.TimeUnit.DAYS.convert(diffInMillis, java.util.concurrent.TimeUnit.MILLISECONDS);
+
+        int lateDays = (diffDays > 0) ? (int) diffDays : 0;
+        double fine = lateDays * FINE_RATE_PER_DAY;
+        double totalBill = rental.getTotalRent() + fine;
+
+        String dateStamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        String receiptNum = "REC-" + dateStamp + "-" + (1000 + (int) (Math.random() * 9000));
+
+        Return returnRecord = new Return(0, rental, actualReturnDateStr, lateDays, fine, totalBill, receiptNum);
+
+        // 1. Save Return Record
+        Return savedReturn = returnRepository.save(returnRecord);
+
+        // 2. Update Rental Status to 'RETURNED'
+        rental.setStatus("RETURNED");
+        rentalRepository.save(rental);
+
+        // 3. Update Vehicle availability back to 1 (Available)
+        Vehicle vehicle = rental.getVehicle();
+        if (vehicle != null) {
+            vehicle.setAvailable(1);
+            vehicleRepository.save(vehicle);
+        }
+
+        return savedReturn;
+    }
+
+    public double getTotalFineRevenue() {
+        Double sum = returnRepository.sumTotalFine();
+        return (sum != null) ? sum : 0.0;
+    }
+}
+
+===== ./src/main/java/com/rentwheels/service/VehicleService.java =====
+
+package com.rentwheels.service;
+
+import com.rentwheels.entity.Vehicle;
+import com.rentwheels.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class VehicleService {
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private ValidationService validationService;
+
+    public List<Vehicle> getAllVehicles() {
+        return vehicleRepository.findAllByOrderByVehicleIdAsc();
+    }
+
+    public List<Vehicle> getAvailableVehicles() {
+        return vehicleRepository.findByAvailableOrderByVehicleIdAsc(1);
+    }
+
+    public Optional<Vehicle> getVehicleById(String id) {
+        return vehicleRepository.findById(id);
+    }
+
+    public List<Vehicle> searchVehicles(String query, String category, String status) {
+        Integer availableFilter = null;
+        if (status != null && !status.equalsIgnoreCase("All")) {
+            if (status.equalsIgnoreCase("Available")) availableFilter = 1;
+            else if (status.equalsIgnoreCase("Rented")) availableFilter = 0;
+            else if (status.equalsIgnoreCase("Maintenance")) availableFilter = 2;
+        }
+
+        return vehicleRepository.searchVehicles(
+                (query != null && !query.trim().isEmpty()) ? query.trim() : null,
+                (category != null && !category.equalsIgnoreCase("All")) ? category : null,
+                availableFilter
+        );
+    }
+
+    @Transactional
+    public void addVehicle(Vehicle vehicle, MultipartFile imageFile) throws Exception {
+        if (!validationService.isValidId(vehicle.getVehicleId())) {
+            throw new IllegalArgumentException("Vehicle ID must be at least 3 characters.");
+        }
+        if (!validationService.isVehicleIdUnique(vehicle.getVehicleId())) {
+            throw new IllegalArgumentException("Vehicle ID already exists in the system.");
+        }
+        if (vehicle.getVehicleName() == null || vehicle.getVehicleName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vehicle name is required.");
+        }
+        if (!validationService.isValidRent(vehicle.getRentPerDay())) {
+            throw new IllegalArgumentException("Rent per day must be a positive number.");
+        }
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imagePath = saveImage(imageFile, vehicle.getVehicleId());
+            vehicle.setImagePath(imagePath);
+        }
+
+        vehicleRepository.save(vehicle);
+    }
+
+    @Transactional
+    public void updateVehicle(Vehicle vehicle, MultipartFile imageFile) throws Exception {
+        Optional<Vehicle> existingOpt = vehicleRepository.findById(vehicle.getVehicleId());
+        if (existingOpt.isEmpty()) {
+            throw new IllegalArgumentException("Vehicle with ID " + vehicle.getVehicleId() + " not found.");
+        }
+
+        if (vehicle.getVehicleName() == null || vehicle.getVehicleName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vehicle name is required.");
+        }
+        if (!validationService.isValidRent(vehicle.getRentPerDay())) {
+            throw new IllegalArgumentException("Rent per day must be a positive number.");
+        }
+
+        Vehicle existing = existingOpt.get();
+        existing.setVehicleName(vehicle.getVehicleName());
+        existing.setCategory(vehicle.getCategory());
+        existing.setRentPerDay(vehicle.getRentPerDay());
+        existing.setAvailable(vehicle.getAvailable());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imagePath = saveImage(imageFile, vehicle.getVehicleId());
+            existing.setImagePath(imagePath);
+        }
+
+        vehicleRepository.save(existing);
+    }
+
+    @Transactional
+    public void deleteVehicle(String id) throws Exception {
+        if (!vehicleRepository.existsById(id)) {
+            throw new IllegalArgumentException("Vehicle with ID " + id + " not found.");
+        }
+        vehicleRepository.deleteById(id);
+    }
+
+    private String saveImage(MultipartFile file, String vehicleId) throws IOException {
+        File uploadDir = new File("uploads/images");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String ext = "";
+        if (originalFilename != null && originalFilename.lastIndexOf('.') > 0) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        }
+
+        String filename = vehicleId + "_" + System.currentTimeMillis() + ext;
+        File dest = new File(uploadDir, filename);
+        Files.copy(file.getInputStream(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        return "/uploads/images/" + filename;
+    }
+
+    public long getTotalVehiclesCount() {
+        return vehicleRepository.count();
+    }
+
+    public long getAvailableVehiclesCount() {
+        return vehicleRepository.countByAvailable(1);
+    }
+
+    public long getRentedVehiclesCount() {
+        return vehicleRepository.countByAvailable(0);
+    }
+
+    public long getMaintenanceVehiclesCount() {
+        return vehicleRepository.countByAvailable(2);
+    }
+}

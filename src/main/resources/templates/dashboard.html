@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">Welcome back to RentWheels Dashboard</h1>
+    </div>
+
+    <!-- 4 Stats Cards Grid (Matching DashboardPanel) -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="title">Total Vehicles</div>
+            <div class="value" th:text="${totalVehicles}">0</div>
+        </div>
+        <div class="stat-card available">
+            <div class="title">Available Vehicles</div>
+            <div class="value" th:text="${availableVehicles}">0</div>
+        </div>
+        <div class="stat-card rented">
+            <div class="title">Rented Vehicles</div>
+            <div class="value" th:text="${rentedVehicles}">0</div>
+        </div>
+        <div class="stat-card customers">
+            <div class="title">Total Customers</div>
+            <div class="value" th:text="${totalCustomers}">0</div>
+        </div>
+    </div>
+
+    <!-- Inventory Table Overview -->
+    <div class="panel-card" style="margin-top: 1.5rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-main);">Current Vehicle Status Overview</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Vehicle ID</th>
+                    <th>Vehicle Name</th>
+                    <th>Category</th>
+                    <th>Rent/Day</th>
+                    <th>Availability Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${vehicles}">
+                    <td th:text="${v.vehicleId}">101</td>
+                    <td th:text="${v.vehicleName}">Toyota Corolla</td>
+                    <td th:text="${v.category}">Sedan</td>
+                    <td th:text="${'Rs. ' + #numbers.formatDecimal(v.rentPerDay, 1, 2)}">Rs. 5000.00</td>
+                    <td>
+                        <span th:if="${v.available == 1}" class="badge badge-available">Available</span>
+                        <span th:if="${v.available == 0}" class="badge badge-rented">Rented</span>
+                        <span th:if="${v.available == 2}" class="badge badge-maintenance">Maintenance</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(vehicles)}">
+                    <td colspan="5" style="text-align: center; color: var(--text-muted);">No vehicles available in database.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

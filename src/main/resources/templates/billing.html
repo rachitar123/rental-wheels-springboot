@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">Billing &amp; Invoice Management</h1>
+        <div>
+            <a th:href="@{/billing/export}" class="btn btn-secondary">Export Table to Excel (CSV)</a>
+        </div>
+    </div>
+
+    <!-- Split View Panel (Matching BillingPanel) -->
+    <div class="split-layout" style="grid-template-columns: 1fr 1fr;">
+        <!-- Left Container: Transaction List -->
+        <div class="panel-card">
+            <h3 style="margin-bottom: 1rem;">Recent Transactions</h3>
+            <div class="table-container">
+                <table class="table" id="billingTable">
+                    <thead>
+                    <tr>
+                        <th>Rental ID</th>
+                        <th>Customer</th>
+                        <th>Vehicle</th>
+                        <th>Status</th>
+                        <th>Total Cost</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rentals}"
+                        style="cursor: pointer;"
+                        th:onclick="loadInvoice([[${r.id}]])">
+                        <td th:text="${'#' + r.id}">#1</td>
+                        <td th:text="${r.customer.name}">Ali Ahmed</td>
+                        <td th:text="${r.vehicle.vehicleName}">Toyota Corolla</td>
+                        <td>
+                            <span th:if="${r.status == 'ACTIVE'}" class="badge badge-active">ACTIVE</span>
+                            <span th:if="${r.status == 'RETURNED'}" class="badge badge-returned">RETURNED</span>
+                        </td>
+                        <td th:text="${'Rs. ' + #numbers.formatDecimal(r.totalRent, 1, 2)}">Rs. 5000.00</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rentals)}">
+                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No rental records available.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Container: Monospaced Invoice Preview -->
+        <div class="panel-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Invoice Receipt Preview</h3>
+                <button type="button" id="printInvoiceBtn" class="btn btn-success" disabled onclick="printText('invoiceArea')">Print Invoice</button>
+            </div>
+            <textarea id="invoiceArea" class="mono-output" readonly placeholder="Click on any transaction record from the left table to generate its invoice receipt preview..."></textarea>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">System Analytics Reports</h1>
+        <div style="display: flex; gap: 0.5rem;">
+            <a th:href="@{/reports}" class="btn btn-primary">Run Reports</a>
+            <a th:href="@{/reports/export}" class="btn btn-secondary">Export Report (TXT)</a>
+            <button type="button" class="btn btn-success" onclick="printText('reportArea')">Print Report</button>
+        </div>
+    </div>
+
+    <!-- Analytics Report View Container (Matching ReportsPanel) -->
+    <div class="panel-card">
+        <textarea id="reportArea" class="mono-output" style="min-height: 480px;" readonly th:text="${reportContent}"></textarea>
+    </div>
+</div>
+</body>
+</html>
