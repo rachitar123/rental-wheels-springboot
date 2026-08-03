@@ -127,7 +127,6 @@ Example:
 **Rachita R**
 
 - GitHub: https://github.com/rachitar123
-- LinkedIn: *(Add your LinkedIn profile URL)*
 
 ---
 
