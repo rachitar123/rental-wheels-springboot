@@ -4,6 +4,7 @@ import com.rentwheels.entity.Rental;
 import com.rentwheels.entity.Return;
 import com.rentwheels.service.RentalService;
 import com.rentwheels.service.ReturnService;
+import com.rentwheels.util.DatabaseErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -45,7 +46,7 @@ public class ReturnController {
             redirectAttributes.addFlashAttribute("successMessage",
                     "Return transaction processed successfully! Receipt: " + returnObj.getReceiptNumber());
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
 
         return "redirect:/returns";

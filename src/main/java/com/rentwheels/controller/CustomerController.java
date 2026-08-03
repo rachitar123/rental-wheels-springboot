@@ -2,6 +2,7 @@ package com.rentwheels.controller;
 
 import com.rentwheels.entity.Customer;
 import com.rentwheels.service.CustomerService;
+import com.rentwheels.util.DatabaseErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,7 +31,7 @@ public class CustomerController {
             customerService.addCustomer(customer);
             redirectAttributes.addFlashAttribute("successMessage", "Customer added successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/customers";
     }
@@ -41,7 +42,7 @@ public class CustomerController {
             customerService.updateCustomer(customer);
             redirectAttributes.addFlashAttribute("successMessage", "Customer updated successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/customers";
     }
@@ -52,7 +53,7 @@ public class CustomerController {
             customerService.deleteCustomer(id);
             redirectAttributes.addFlashAttribute("successMessage", "Customer deleted successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/customers";
     }

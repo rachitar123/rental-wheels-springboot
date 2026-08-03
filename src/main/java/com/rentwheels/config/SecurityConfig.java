@@ -25,7 +25,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/h2-console/**", "/login").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/login").permitAll()
                 .requestMatchers("/reports/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -39,12 +39,6 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
-            )
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/h2-console/**")
-            )
-            .headers(headers -> headers
-                .frameOptions(frame -> frame.sameOrigin())
             );
 
         return http.build();

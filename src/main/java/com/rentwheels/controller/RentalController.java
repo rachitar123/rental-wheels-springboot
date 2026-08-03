@@ -3,6 +3,7 @@ package com.rentwheels.controller;
 import com.rentwheels.service.CustomerService;
 import com.rentwheels.service.RentalService;
 import com.rentwheels.service.VehicleService;
+import com.rentwheels.util.DatabaseErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,7 +45,7 @@ public class RentalController {
             rentalService.bookVehicle(customerId, vehicleId, rentalDate, expectedReturnDate, days);
             redirectAttributes.addFlashAttribute("successMessage", "Booking saved successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
 
         return "redirect:/rentals";

@@ -1,6 +1,8 @@
 target/
 data/
 uploads/
+.tmp/
+.m2-local/
 *.db
 *.log
 .idea/

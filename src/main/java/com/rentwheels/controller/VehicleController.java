@@ -2,6 +2,7 @@ package com.rentwheels.controller;
 
 import com.rentwheels.entity.Vehicle;
 import com.rentwheels.service.VehicleService;
+import com.rentwheels.util.DatabaseErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -40,7 +41,7 @@ public class VehicleController {
             vehicleService.addVehicle(vehicle, imageFile);
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle added successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/vehicles";
     }
@@ -53,7 +54,7 @@ public class VehicleController {
             vehicleService.updateVehicle(vehicle, imageFile);
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle updated successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/vehicles";
     }
@@ -64,7 +65,7 @@ public class VehicleController {
             vehicleService.deleteVehicle(id);
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle deleted successfully!");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", DatabaseErrorMessages.toUserMessage(ex));
         }
         return "redirect:/vehicles";
     }
